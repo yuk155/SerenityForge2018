@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.UI;
 public class BoardScript : MonoBehaviour {
 
 	//Rows of gameobjects for game logic 
@@ -34,6 +34,8 @@ public class BoardScript : MonoBehaviour {
 	private PegScript checkPegScript; 
 	private GameObject middlePeg;
 	private PegScript middlePegScript;
+	private int col;
+	int row;
 
 	//removePeg() variables
 	private int startRow;
@@ -56,6 +58,9 @@ public class BoardScript : MonoBehaviour {
 	private int pegNum;
 	private PegScript winPegScript; 
 
+	//setPegNum() variables 
+	public Text pegsText;
+	public int pegsLeft; 
 
 	// Use this for initialization
 	void Start (){
@@ -65,6 +70,8 @@ public class BoardScript : MonoBehaviour {
 		board.Add (row2);
 		board.Add (row3);
 		board.Add (row4);
+
+		pegsText.text = "14";
 	}
 	
 	// Update is called once per frame
@@ -74,6 +81,7 @@ public class BoardScript : MonoBehaviour {
 
 		if (Input.GetMouseButtonDown (0)) {
 			playGame ();
+			setPegNum ();
 		}
 
 
@@ -162,7 +170,7 @@ public class BoardScript : MonoBehaviour {
 						if (validMoves.Contains (currentPeg)) {
 							//set the previous peg to empty 
 							if (previousPeg != null) {
-								previousPegScript = previousPeg.GetComponent<PegScript>();
+								previousPegScript = previousPeg.GetComponent<PegScript> ();
 								previousPegScript.setIsSelected (false);
 								previousPegScript.setHasPeg (false);
 								previousPegScript.setEmpty ();
@@ -171,7 +179,13 @@ public class BoardScript : MonoBehaviour {
 							previousPeg = currentPeg;
 							return currentPeg;
 						}
+						//if its not a valid move, remove the isSelected return the seleted peg 
+						else {
+							currentPegScript.setIsSelected (false);
+							return selectedPeg;
+						}
 					}
+
 				}
 
 			}
@@ -182,12 +196,9 @@ public class BoardScript : MonoBehaviour {
 	//Checks for valid moves based on the selected peg, returns a list of the valid gameobjects 
 	List<GameObject> checkValidMoves(GameObject peg)
 	{
-		string name = peg.name;
-		int row;
+		int.TryParse(peg.name.Substring (3, 1), out row);
+		int.TryParse(peg.name.Substring(5, 1), out col);
 
-		int.TryParse(name.Substring (3, 1), out row);
-		int col;
-		int.TryParse(name.Substring(5, 1), out col);
 		//valid moves would be anything that are two spots away from it, as long as it is still within the bounds of the board
 		List<GameObject> locationList = new List<GameObject>(); 
 		//position 0 - row
@@ -212,21 +223,23 @@ public class BoardScript : MonoBehaviour {
 					continue; 
 				}
 				validLocation [1] = j;
+
 				//checks and makes sure you're not trying to access the current location 
 				if (validLocation [0] == row && validLocation [1] == col) {
 					continue; 
 				}
+
 				//check and see if the spot is empty 
 				checkPegScript = board[i][j].GetComponent<PegScript>();
 				if (checkPegScript.getHasPeg() == false) {
-					//check and make sure it's not too far away 
-					if (Mathf.Abs (row - i) == 2 && Mathf.Abs (col - i) == 2) {
+					//ROW4_0 breaks the algrorithm -> Check for this one edge case 
+					if (peg.name.Equals("Row4_0") && i == 2 && j == 2) {
 						continue;
 					}
 					//if there is a peg in between them then it is a valid move 
 					middlePeg = getPegInbetween(peg, board[i][j]);
 					middlePegScript = middlePeg.GetComponent<PegScript> ();
-					if (middlePegScript.getHasPeg () == true) {
+					if (middlePegScript.getHasPeg () == true){
 						locationList.Add (board [i] [j]);
 					}
 				}
@@ -313,5 +326,21 @@ public class BoardScript : MonoBehaviour {
 			}
 		}
 		return true;
+	}
+
+	//set the number of pegs left in the canvas 
+	void setPegNum()
+	{
+		pegsLeft = 0;
+		for (int i = 0; i < board.Count; i++) {
+			for (int j = 0; j < board [i].Length; j++) {
+				winPegScript = board [i] [j].GetComponent<PegScript> ();
+				if (winPegScript.getHasPeg () == true) {
+					pegsLeft++;
+				}
+			}
+		}
+
+		pegsText.text = pegsLeft.ToString();
 	}
 }
