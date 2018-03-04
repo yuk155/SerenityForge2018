@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 public class BoardScript : MonoBehaviour {
 
 	//Rows of gameobjects for game logic 
@@ -53,6 +54,7 @@ public class BoardScript : MonoBehaviour {
 	//checkForMoves() variables
 	//Must be public, again, don't know why 
 	public List<GameObject> moveList; 
+	private PegScript pegScript;
 
 	//checkForWin() variables
 	private int pegNum;
@@ -60,7 +62,13 @@ public class BoardScript : MonoBehaviour {
 
 	//setPegNum() variables 
 	public Text pegsText;
-	public int pegsLeft; 
+	private int pegsLeft; 
+
+	//UI variables 
+	public Text gameEndText;
+	public Button resetButton; 
+	private Button button; 
+
 
 	// Use this for initialization
 	void Start (){
@@ -71,7 +79,11 @@ public class BoardScript : MonoBehaviour {
 		board.Add (row3);
 		board.Add (row4);
 
+		//initialized UI
 		pegsText.text = "14";
+		gameEndText.enabled = false; 
+		button = resetButton.GetComponent<Button> (); 
+		button.onClick.AddListener (TaskOnClick);
 	}
 	
 	// Update is called once per frame
@@ -84,7 +96,9 @@ public class BoardScript : MonoBehaviour {
 			setPegNum ();
 		}
 
-
+		if (Input.GetKeyDown (KeyCode.Q)) {
+			Application.Quit ();
+		}
 
 	}
 	//play game
@@ -124,10 +138,12 @@ public class BoardScript : MonoBehaviour {
 
 
 			if (checkForWin ()) {
-				Debug.Log ("player won");
+				gameEndText.enabled = true; 
+				gameEndText.text = "You won!";
 			}
 			if (!checkForMoves ()) {
-				Debug.Log ("No more valid moves");
+				gameEndText.enabled = true; 
+				gameEndText.text = "You Lost";
 			}
 
 		}
@@ -190,7 +206,8 @@ public class BoardScript : MonoBehaviour {
 
 			}
 		}
-		return null;
+		//always return the current peg in case of errant clicks
+		return selectedPeg;
 	}
 
 	//Checks for valid moves based on the selected peg, returns a list of the valid gameobjects 
@@ -300,11 +317,14 @@ public class BoardScript : MonoBehaviour {
 	{
 		for (int i = 0; i < board.Count; i++) {
 			for (int j = 0; j < board [i].Length; j++) {
-				moveList = checkValidMoves (board [i] [j]);
-				if (moveList.Count > 0) {
-					return true; 
+				pegScript = board [i] [j].GetComponent<PegScript> ();
+				if (pegScript.hasPeg == true) {
+					moveList = checkValidMoves (board [i] [j]);
+					if (moveList.Count > 0) {
+						return true; 
+					}
+					moveList.Clear ();
 				}
-				moveList.Clear ();
 			}
 		}
 		return false; 
@@ -342,5 +362,11 @@ public class BoardScript : MonoBehaviour {
 		}
 
 		pegsText.text = pegsLeft.ToString();
+	}
+
+	//Button click to reset the level 
+	void TaskOnClick()
+	{
+		SceneManager.LoadScene (0);
 	}
 }
